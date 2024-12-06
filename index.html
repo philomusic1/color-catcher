@@ -50,88 +50,31 @@
 <script>
     const canvas = document.getElementById("gameCanvas");
     const ctx = canvas.getContext("2d");
+    const scoreboard = document.querySelector(".scoreboard");
+    const gameOverMessage = document.querySelector(".game-over");
 
     const basketWidth = 70;
     const basketHeight = 20;
-    let basketX = canvas.width / 2 - basketWidth / 2;
-
-    const colors = ["red", "green", "blue", "yellow", "purple"];
-    let fallingBlocks = [];
     const blockSize = 30;
     const fallingSpeed = 2;
-    
+    let basketX = canvas.width / 2 - basketWidth / 2;
     let score = 0;
     let gameOver = false;
 
-    // Scoreboard and Game Over message
-    const scoreboard = document.createElement("div");
-    scoreboard.style.position = "absolute";
-    scoreboard.style.top = "10px";
-    scoreboard.style.left = "10px";
-    scoreboard.style.fontSize = "24px";
-    scoreboard.style.color = "#333";
-    document.body.appendChild(scoreboard);
+    const colors = ["red", "green", "blue", "yellow", "purple"];
+    let fallingBlocks = [];
 
-    const gameOverMessage = document.createElement("div");
-    gameOverMessage.style.position = "absolute";
-    gameOverMessage.style.top = "50%";
-    gameOverMessage.style.left = "50%";
-    gameOverMessage.style.transform = "translate(-50%, -50%)";
-    gameOverMessage.style.fontSize = "48px";
-    gameOverMessage.style.color = "red";
-    gameOverMessage.style.display = "none";
-    gameOverMessage.textContent = "Game Over!";
-    document.body.appendChild(gameOverMessage);
-
-    // Function to draw the basket
     function drawBasket() {
         ctx.fillStyle = "#333";
         ctx.fillRect(basketX, canvas.height - basketHeight, basketWidth, basketHeight);
     }
 
-    // Function to check if a new block overlaps with existing blocks
-    function checkOverlap(newBlock) {
-        for (let i = 0; i < fallingBlocks.length; i++) {
-            const block = fallingBlocks[i];
-            // Check if the new block's coordinates overlap with any existing block's coordinates
-            if (newBlock.x < block.x + blockSize && newBlock.x + blockSize > block.x && 
-                newBlock.y < block.y + blockSize && newBlock.y + blockSize > block.y) {
-                return true; // There is an overlap
-            }
-        }
-        return false; // No overlap
-    }
-
-    // Function to create a new falling block
     function createFallingBlock() {
-        let newBlock;
-        do {
-            // Try to place a new block at a random x position
-            newBlock = {
-                x: Math.random() * (canvas.width - blockSize),
-                y: -blockSize,
-                color: colors[Math.floor(Math.random() * colors.length)],
-            };
-        } while (checkOverlap(newBlock)); // Keep trying until there is no overlap
-
-        fallingBlocks.push(newBlock); // Add the block if no overlap is found
+        const color = colors[Math.floor(Math.random() * colors.length)];
+        const x = Math.random() * (canvas.width - blockSize);
+        fallingBlocks.push({ x, y: -blockSize, color });
     }
 
-    // Function to check if a block collides with the basket
-    function checkBlockCollision(block) {
-        if (
-            block.y + blockSize > canvas.height - basketHeight && // Block touches the bottom
-            block.x + blockSize > basketX && // Block is within the basket's horizontal bounds
-            block.x < basketX + basketWidth // Block is within the basket's horizontal bounds
-        ) {
-            score += 10; // Increase score when a block is caught
-            updateScore();
-            return true; // Block is caught by the basket
-        }
-        return false;
-    }
-
-    // Function to draw all falling blocks and handle their movement
     function drawFallingBlocks() {
         for (let i = 0; i < fallingBlocks.length; i++) {
             const block = fallingBlocks[i];
@@ -139,26 +82,29 @@
             ctx.fillRect(block.x, block.y, blockSize, blockSize);
             block.y += fallingSpeed;
 
-            // If the block collides with the basket, remove it
-            if (checkBlockCollision(block)) {
+            if (block.y + blockSize > canvas.height - basketHeight &&
+                block.x > basketX && block.x < basketX + basketWidth &&
+                !gameOver) {
+                if (block.color === "green") {
+                    score += 10;
+                } else {
+                    gameOver = true;
+                    gameOverMessage.style.display = "block";
+                }
                 fallingBlocks.splice(i, 1);
-                i--; // Decrement index after removal
-            }
-
-            // Remove blocks that fall below the canvas without being caught
-            else if (block.y > canvas.height) {
+                i--;
+                updateScore();
+            } else if (block.y > canvas.height) {
                 fallingBlocks.splice(i, 1);
-                i--; // Decrement index after removal
+                i--;
             }
         }
     }
 
-    // Function to update the score display
     function updateScore() {
         scoreboard.textContent = "Score: " + score;
     }
 
-    // Function to move the basket based on key input
     function moveBasket(e) {
         if (e.key === "ArrowLeft" && basketX > 0) {
             basketX -= 20;
@@ -168,7 +114,6 @@
         }
     }
 
-    // Main game loop
     function gameLoop() {
         if (gameOver) return;
 
@@ -176,7 +121,6 @@
         drawBasket();
         drawFallingBlocks();
 
-        // Randomly create new falling blocks
         if (Math.random() < 0.02) {
             createFallingBlock();
         }
@@ -184,7 +128,6 @@
         requestAnimationFrame(gameLoop);
     }
 
-    // Function to start/restart the game
     function startGame() {
         score = 0;
         gameOver = false;
@@ -195,15 +138,7 @@
         gameLoop();
     }
 
-    // Event listener for keypresses
-    window.addEventListener("keydown", (e) => {
-        if (e.key === "Enter" && gameOver) {
-            startGame();
-        }
-        moveBasket(e);
-    });
-
-    // Initialize and start the game
+    window.addEventListener("keydown", moveBasket);
     startGame();
 </script>
 
