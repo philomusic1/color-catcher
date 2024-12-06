@@ -1,51 +1,146 @@
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Colour Catcher Game</title>
-        <style>
-            body {
-                font-family: Arial, sans-serif;
-                margin: 0;
-                padding: 0;
-                background-color: #f3f3f3;
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                height: 100vh;
-                overflow: hidden;
-            }
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Color Catcher Game</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f3f3f3;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+        }
 
-            canvas {
-                border: 2px solid #000;
-                background-color: #fff;
-            }
-        </style>
-        </head>
-        <body>
-            <canvas id="gameCanvas" width="400" height="600"></canvas>
-       
-            <script>
-                const canvas = document.getElementById("gameCanvas");
-                const ctx = canvas.getContext("2d");
+        canvas {
+            border: 2px solid #000;
+            background-color: #fff;
+        }
 
-                const basketWidth = 70;
-                const basketHeight = 20;
-                let basketx = canvas.width / 2 - basketwWidth / 2;
+        .scoreboard {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            font-size: 24px;
+            color: #333;
+        }
 
-                function drawBasket() {
-                    ctx.fillStyle = "#333";
-                    ctx.fillrect(basketX, canvas.height - basketHeight, basketWidth, basketHeight);
+        .game-over {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 48px;
+            color: red;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+<div class="scoreboard">Score: 0</div>
+<div class="game-over">Game Over!</div>
+<canvas id="gameCanvas" width="400" height="600"></canvas>
+
+<script>
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+    const scoreboard = document.querySelector(".scoreboard");
+    const gameOverMessage = document.querySelector(".game-over");
+
+    const basketWidth = 70;
+    const basketHeight = 20;
+    const blockSize = 30;
+    const fallingSpeed = 2;
+    let basketX = canvas.width / 2 - basketWidth / 2;
+    let score = 0;
+    let gameOver = false;
+
+    const colors = ["red", "green", "blue", "yellow", "purple"];
+    let fallingBlocks = [];
+
+    function drawBasket() {
+        ctx.fillStyle = "#333";
+        ctx.fillRect(basketX, canvas.height - basketHeight, basketWidth, basketHeight);
+    }
+
+    function createFallingBlock() {
+        const color = colors[Math.floor(Math.random() * colors.length)];
+        const x = Math.random() * (canvas.width - blockSize);
+        fallingBlocks.push({ x, y: -blockSize, color });
+    }
+
+    function drawFallingBlocks() {
+        for (let i = 0; i < fallingBlocks.length; i++) {
+            const block = fallingBlocks[i];
+            ctx.fillStyle = block.color;
+            ctx.fillRect(block.x, block.y, blockSize, blockSize);
+            block.y += fallingSpeed;
+
+            if (block.y + blockSize > canvas.height - basketHeight &&
+                block.x > basketX && block.x < basketX + basketWidth &&
+                !gameOver) {
+                if (block.color === "green") {
+                    score += 10;
+                } else {
+                    gameOver = true;
+                    gameOverMessage.style.display = "block";
                 }
+                fallingBlocks.splice(i, 1);
+                i--;
+                updateScore();
+            } else if (block.y > canvas.height) {
+                fallingBlocks.splice(i, 1);
+                i--;
+            }
+        }
+    }
 
-                function gameLoop() {
-                    ctx.clearRect(0, 0, canvasWidth, canvasHeight);
-                    drawBasket();
-                    requestAnimationFrame(gameLoop);
-                }
+    function updateScore() {
+        scoreboard.textContent = "Score: " + score;
+    }
 
-                gameLoop();
-            </script>
-        </body>
-        </html>
+    function moveBasket(e) {
+        if (e.key === "ArrowLeft" && basketX > 0) {
+            basketX -= 20;
+        }
+        if (e.key === "ArrowRight" && basketX < canvas.width - basketWidth) {
+            basketX += 20;
+        }
+    }
+
+    function gameLoop() {
+        if (gameOver) return;
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        drawBasket();
+        drawFallingBlocks();
+
+        if (Math.random() < 0.02) {
+            createFallingBlock();
+        }
+
+        requestAnimationFrame(gameLoop);
+    }
+
+    function startGame() {
+        score = 0;
+        gameOver = false;
+        fallingBlocks = [];
+        basketX = canvas.width / 2 - basketWidth / 2;
+        gameOverMessage.style.display = "none";
+        updateScore();
+        gameLoop();
+    }
+
+    window.addEventListener("keydown", moveBasket);
+    startGame();
+</script>
+
+</body>
+</html>
