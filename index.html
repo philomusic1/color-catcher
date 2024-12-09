@@ -34,6 +34,16 @@
             text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
         }
 
+
+        .life-counter {
+            position: absolute;
+            top: 20px;
+            right:20px;
+            font-size: 28px;
+            font-weight: 600;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
+        }
+
         .game-over {
             position: absolute;
             top: 50%;
@@ -69,66 +79,118 @@
         .restart-btn:focus {
             outline: none;
         }
+
+        .popup {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(0, 0, 0, 0.8);
+            padding: 30px;
+            border-radius: 10px;
+            color: white;
+            text-align: center;
+            display: none;
+        }
+
+        .popup button {
+            margin-top: 20px;
+            padding: 10px 20px;
+            background-color: #ff5733;
+            border: none;
+            border-radius: 5px;
+            color: white;
+            font-size: 18px;
+            cursor: pointer;
+        }
+
+        .popup button:hover {
+            background-color: #ff2f00;
+        }
     </style>
 </head>
 <body>
 
 <div class="scoreboard">Score: 0</div>
+<div class="life-counter">Lives: 3</div>
 <div class="game-over">Game Over!</div>
 <button class="restart-btn" onclick="startGame()">Restart Game</button>
+
+<div class="popup">
+    <h2>Welcome to Color Catcher!</h2>
+    <p>Catch the green balls to gain points and avoid the red ones to prevent losing a life!</p>
+    <p>Sometimes hearts (Pink Circles) will fall, and if you catch them, you'll gain an extra life!</p>
+    <button onclick="closePopup()">OK</button>
+</div>
+
 <canvas id="gameCanvas" width="400" height="600"></canvas>
 
 <script>
     const canvas = document.getElementById("gameCanvas");
     const ctx = canvas.getContext("2d");
     const scoreboard = document.querySelector(".scoreboard");
+    const lifeCounter = document.querySelector(".life-counter");
     const gameOverMessage = document.querySelector(".game-over");
     const restartButton = document.querySelector(".restart-btn");
+    const popup = document.querySelector(".popup");
 
     const basketWidth = 70;
     const basketHeight = 20;
-    const blockSize = 30;
+    const ballSize = 30;
     const fallingSpeed = 2;
     let basketX = canvas.width / 2 - basketWidth / 2;
     let score = 0;
+    let lives = 3;
     let gameOver = false;
 
-    const colors = ["red", "green", "blue", "yellow", "purple"];
-    let fallingBlocks = [];
+    const colors = ["green", "red", "yellow", "purple"];
+    const fallingItems = [];
 
     function drawBasket() {
         ctx.fillStyle = "#333";
         ctx.fillRect(basketX, canvas.height - basketHeight, basketWidth, basketHeight);
     }
 
-    function createFallingBlock() {
+    function createFallingItem() {
         const color = colors[Math.floor(Math.random() * colors.length)];
-        const x = Math.random() * (canvas.width - blockSize);
-        fallingBlocks.push({ x, y: -blockSize, color });
+        const isHeart = Math.random() < 0.05; // 5% chance to fall hearts
+        const x = Math.random() * (canvas.width - ballSize);
+        fallingItems.push({
+            x, y: -ballSize, color, isHeart
+        });
     }
 
-    function drawFallingBlocks() {
-        for (let i = 0; i < fallingBlocks.length; i++) {
-            const block = fallingBlocks[i];
-            ctx.fillStyle = block.color;
-            ctx.fillRect(block.x, block.y, blockSize, blockSize);
-            block.y += fallingSpeed;
+    function drawFallingItems() {
+        for (let i = 0; i < fallingItems.length; i++) {
+            const item = fallingItems[i];
+            ctx.fillStyle = item.isHeart ? "pink" : item.color;
+            ctx.beginPath();
+            ctx.arc(item.x + ballSize / 2, item.y + ballSize / 2, ballSize / 2, 0, Math.PI * 2);
+            ctx.fill();
+            item.y += fallingSpeed;
 
-            if (block.y + blockSize > canvas.height - basketHeight &&
-                block.x > basketX && block.x < basketX + basketWidth &&
-                !gameOver) {
-                if (block.color === "green") {
+            // Check for collision with the basket
+            if (item.y + ballSize > canvas.height - basketHeight &&
+                item.x > basketX && item.x < basketX + basketWidth && !gameOver) {
+                if (item.isHeart) {
+                    lives++;
+                    lifeCounter.textContent = "Lives: " + lives;
+                } else if (item.color === "green") {
                     score += 10;
                 } else {
-                    gameOver = true;
-                    gameOverMessage.style.display = "block";
-                    restartButton.style.display = "inline-block";
+                    lives--;
+                    lifeCounter.textContent = "Lives: " + lives;
+                    if (lives <= 0) {
+                        gameOver = true;
+                        gameOverMessage.style.display = "block";
+                        restartButton.style.display = "inline-block";
+                    }
                 }
-                fallingBlocks.splice(i, 1);
+                fallingItems.splice(i, 1);
                 i--;
                 updateScore();
-            } else if (block.y > canvas.height) {
-                fallingBlocks.splice(i, 1);
+            } else if (item.y > canvas.height) {
+                fallingItems.splice(i, 1);
                 i--;
             }
         }
@@ -152,10 +214,10 @@
 
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         drawBasket();
-        drawFallingBlocks();
+        drawFallingItems();
 
         if (Math.random() < 0.02) {
-            createFallingBlock();
+            createFallingItem();
         }
 
         requestAnimationFrame(gameLoop);
@@ -163,17 +225,26 @@
 
     function startGame() {
         score = 0;
+        lives = 3;
         gameOver = false;
-        fallingBlocks = [];
+        fallingItems.length = 0;
         basketX = canvas.width / 2 - basketWidth / 2;
         gameOverMessage.style.display = "none";
         restartButton.style.display = "none";
         updateScore();
+        lifeCounter.textContent = "Lives: " + lives;
+        gameLoop();
+    }
+
+    function closePopup() {
+        popup.style.display = "none";
         gameLoop();
     }
 
     window.addEventListener("keydown", moveBasket);
-    startGame();
+
+    // Show the pop-up on game start
+    popup.style.display = "block";
 </script>
 
 </body>
