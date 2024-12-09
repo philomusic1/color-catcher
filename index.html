@@ -4,30 +4,34 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Color Catcher Game</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Poppins', sans-serif;
             margin: 0;
             padding: 0;
-            background-color: #f3f3f3;
+            background: linear-gradient(135deg, #ff7e5f, #feb47b);
             display: flex;
             justify-content: center;
             align-items: center;
             height: 100vh;
             overflow: hidden;
+            color: white;
         }
 
         canvas {
-            border: 2px solid #000;
-            background-color: #fff;
+            border: 3px solid #fff;
+            border-radius: 15px;
+            background-color: #1e1e1e;
         }
 
         .scoreboard {
             position: absolute;
-            top: 10px;
-            left: 10px;
-            font-size: 24px;
-            color: #333;
+            top: 20px;
+            left: 20px;
+            font-size: 28px;
+            font-weight: 600;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
         }
 
         .game-over {
@@ -35,9 +39,35 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            font-size: 48px;
-            color: red;
+            font-size: 50px;
+            font-weight: 600;
+            color: #ff5733;
+            text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.8);
             display: none;
+        }
+
+        .restart-btn {
+            position: absolute;
+            top: 60%;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 15px 30px;
+            font-size: 18px;
+            background-color: #ff5733;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            display: none;
+            transition: background-color 0.3s ease;
+        }
+
+        .restart-btn:hover {
+            background-color: #ff2f00;
+        }
+
+        .restart-btn:focus {
+            outline: none;
         }
     </style>
 </head>
@@ -45,6 +75,7 @@
 
 <div class="scoreboard">Score: 0</div>
 <div class="game-over">Game Over!</div>
+<button class="restart-btn" onclick="startGame()">Restart Game</button>
 <canvas id="gameCanvas" width="400" height="600"></canvas>
 
 <script>
@@ -52,6 +83,7 @@
     const ctx = canvas.getContext("2d");
     const scoreboard = document.querySelector(".scoreboard");
     const gameOverMessage = document.querySelector(".game-over");
+    const restartButton = document.querySelector(".restart-btn");
 
     const basketWidth = 70;
     const basketHeight = 20;
@@ -90,6 +122,7 @@
                 } else {
                     gameOver = true;
                     gameOverMessage.style.display = "block";
+                    restartButton.style.display = "inline-block";
                 }
                 fallingBlocks.splice(i, 1);
                 i--;
@@ -134,6 +167,7 @@
         fallingBlocks = [];
         basketX = canvas.width / 2 - basketWidth / 2;
         gameOverMessage.style.display = "none";
+        restartButton.style.display = "none";
         updateScore();
         gameLoop();
     }
