@@ -147,7 +147,7 @@
     const basketWidth = 70;
     const basketHeight = 20;
     const ballSize = 30;
-    const fallingSpeed = 2;
+    let fallingSpeed = 2;  // Starting falling speed
     let basketX = canvas.width / 2 - basketWidth / 2;
     let score = 0;
     let lives = 3;
@@ -213,6 +213,10 @@
 
     function updateScore() {
         scoreboard.textContent = "Score: " + score;
+        // Increase speed every 100 points
+        if (score % 100 === 0 && score !== 0) {
+            fallingSpeed += 0.5;  // Increase speed
+        }
     }
 
     function moveBasket(e) {
@@ -252,6 +256,7 @@
         gameOver = false;
         fallingItems.length = 0;
         basketX = canvas.width / 2 - basketWidth / 2;
+        fallingSpeed = 2;  // Reset speed when starting a new game
         gameOverMessage.style.display = "none";
         restartButton.style.display = "none";
         updateScore();
@@ -269,6 +274,5 @@
     // Show the pop-up on game start
     popup.style.display = "block";
 </script>
-
 </body>
 </html>
